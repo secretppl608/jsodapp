@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+// next.config.ts
+import type { NextConfig } from 'next'
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+const config: NextConfig = {
+  output: 'standalone' // 关键：启用独立部署模式
+}
 
-export default nextConfig;
+export default config

@@ -1,5 +1,6 @@
- {
-   "builds": [{"src": "src/*.ts", "use": "@vercel/node"}],
-   "routes": [{"src": "/(.*)", "dest": "src/index.ts"}]
- }
+{
+  "rewrites": [],
+  "redirects": [],
+  "headers": []
+}
 
