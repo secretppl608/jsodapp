@@ -6,3 +6,12 @@ const config: NextConfig = {
 }
 
 export default config
+
+module.exports = {
+  output: 'standalone', // 必须的
+  // 添加以下配置解决 lightningcss 问题
+  experimental: {
+    optimizeCss: false,
+    optimizeFonts: false,
+  }
+}
