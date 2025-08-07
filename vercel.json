@@ -1,6 +1,8 @@
 {
-  "rewrites": [],
-  "redirects": [],
-  "headers": []
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
 }
-
