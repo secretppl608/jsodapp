@@ -8,10 +8,9 @@ const config: NextConfig = {
 export default config
 
 module.exports = {
-  output: 'standalone', // 必须的
-  // 添加以下配置解决 lightningcss 问题
-  optimizeFonts: true,
+  output: 'standalone', 
   experimental: {
-    optimizeCss: false
+    optimizeCss: false,
+    optimizeFonts: true
   }
 }
