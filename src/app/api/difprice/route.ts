@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 interface RequestBody {
   selectedServices: string[];
   selectedTime: string;
-  number: number; // 确保定义正确
+  number: number;
 }
 
 // 定义响应体类型
@@ -13,6 +13,33 @@ interface ResponseData {
   total?: number;
   pm?: number;
   message?: string;
+}
+
+// 定义服务价格类型
+type TimePrice = {
+  '15': number;
+  '30+5': number;
+  '60+15': number;
+  '120+30': number;
+};
+
+interface ServicePrices {
+  fixed_service1: number;
+  fixed_service2: number;
+  fixed_service3: number;
+  fixed_service4: number;
+  fixed_service5: number;
+  night_subsidy: TimePrice;
+  time_service1: TimePrice;
+  time_service2: TimePrice;
+  time_service3: TimePrice;
+  time_service4: TimePrice;
+  time_service5: TimePrice;
+  time_service6: TimePrice;
+  time_service7: TimePrice;
+  time_service8: TimePrice;
+  // 允许其他字符串键，但值必须是 number 或 TimePrice
+  [key: string]: number | TimePrice;
 }
 
 export default async function handler(
@@ -25,10 +52,10 @@ export default async function handler(
   }
 
   try {
-    // 解析请求体 - 需要包含 number
+    // 解析请求体 - 包含 number
     const { selectedServices, selectedTime, number }: RequestBody = req.body;
 
-    // 验证参数 - 确保所有必需参数都存在
+    // 验证参数
     if (!selectedServices || !selectedTime || number === undefined) {
       return res.status(400).json({
         success: false,
@@ -36,14 +63,14 @@ export default async function handler(
       });
     }
 
-    // 调用计算函数并传入 number
+    // 调用计算函数
     const calculatedPrice = calculatePrice(selectedServices, selectedTime, number);
 
-    // 返回成功响应 - 修正了 pm 值的语法错误
+    // 返回成功响应
     res.status(200).json({
       success: true,
       total: calculatedPrice,
-      pm: parseFloat((calculatedPrice * 0.5).toFixed(2)) // 移除分号
+      pm: parseFloat((calculatedPrice * 0.5).toFixed(2))
     });
 
   } catch (error) {
@@ -55,13 +82,14 @@ export default async function handler(
   }
 }
 
-// 计算函数 - 添加 number 参数
+// 使用严格类型的计算函数
 function calculatePrice(
   selectedServices: string[], 
   selectedTime: string,
-  number: number // 添加 number 参数
+  number: number
 ): number {
-  const servicePrices = {
+  // 使用严格类型定义的服务价格
+  const servicePrices: ServicePrices = {
     fixed_service1: 2.00,
     fixed_service2: 2.00,
     fixed_service3: 3.00,
@@ -126,16 +154,28 @@ function calculatePrice(
   let allPriceSum = 0.00;
   
   selectedServices.forEach(serviceId => {
-    const priceInfo = (servicePrices as any)[serviceId]; // 使用类型断言
+    const priceInfo = servicePrices[serviceId];
     
     if (typeof priceInfo === 'number') {
       allPriceSum += priceInfo;
-    } else if (typeof priceInfo === 'object' && priceInfo[selectedTime] !== undefined) {
-      allPriceSum += priceInfo[selectedTime];
+    } else if (isTimePrice(priceInfo)) {
+      // 使用类型守卫确保 priceInfo 是 TimePrice 类型
+      const timePrice = priceInfo[selectedTime as keyof TimePrice];
+      if (typeof timePrice === 'number') {
+        allPriceSum += timePrice;
+      }
     }
   });
 
-  // 直接使用传入的 number 参数，而不是 number.value
   const total = parseFloat(allPriceSum.toFixed(2)) * number;
   return total;
+}
+
+// 类型守卫函数，检查是否为 TimePrice 类型
+function isTimePrice(obj: any): obj is TimePrice {
+  return obj && 
+         typeof obj['15'] === 'number' &&
+         typeof obj['30+5'] === 'number' &&
+         typeof obj['60+15'] === 'number' &&
+         typeof obj['120+30'] === 'number';
 }
