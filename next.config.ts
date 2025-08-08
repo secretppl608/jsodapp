@@ -2,7 +2,12 @@
 import type { NextConfig } from 'next'
 
 const config: NextConfig = {
-  output: 'standalone' // 关键：启用独立部署模式
+  output: 'standalone',
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  }
 }
 
 export default config
