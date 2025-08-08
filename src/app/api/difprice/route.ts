@@ -1,18 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-interface RequestBody {
-  selectedServices: string[];
-  selectedTime: TimeSlot;
-  number: number;
-}
-
-interface ResponseData {
-  success: boolean;
-  total?: number;
-  pm?: number;
-  message?: string;
-}
-
+// 类型定义
 type TimeSlot = '15' | '30+5' | '60+15' | '120+30';
 
 interface ServicePricing {
@@ -20,7 +8,20 @@ interface ServicePricing {
   timeBased?: Record<TimeSlot, number>;
 }
 
-// 定价配置 - 集中管理所有服务价格规则
+interface PriceRequest {
+  selectedServices: string[];
+  selectedTime: TimeSlot;
+  quantity: number;
+}
+
+interface PriceResponse {
+  success: boolean;
+  total?: number;
+  pm?: number;
+  message?: string;
+}
+
+// 定价配置
 const PRICING_CONFIG: Record<string, ServicePricing> = {
   fixed_service1: { fixed: 2.00 },
   fixed_service2: { fixed: 2.00 },
@@ -28,7 +29,7 @@ const PRICING_CONFIG: Record<string, ServicePricing> = {
   fixed_service4: { fixed: 2.00 },
   fixed_service5: { fixed: 0.01 },
   
-  // 时间相关服务 (1-6 使用相同定价)
+  // 时间相关服务 (1-6)
   time_service1: { timeBased: { '15': 2.00, '30+5': 4.00, '60+15': 6.00, '120+30': 8.00 }},
   time_service2: { timeBased: { '15': 2.00, '30+5': 4.00, '60+15': 6.00, '120+30': 8.00 }},
   time_service3: { timeBased: { '15': 2.00, '30+5': 4.00, '60+15': 6.00, '120+30': 8.00 }},
@@ -44,92 +45,49 @@ const PRICING_CONFIG: Record<string, ServicePricing> = {
   night_subsidy: { timeBased: { '15': 0.50, '30+5': 1.00, '60+15': 2.00, '120+30': 4.00 }}
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ResponseData>
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-  }
-
-  // 增强型请求验证
-  const validationError = validateRequestBody(req.body);
-  if (validationError) {
-    return res.status(400).json({
-      success: false,
-      message: validationError
-    });
-  }
-
-  const { selectedServices, selectedTime, number } = req.body as RequestBody;
-
-  try {
-    const total = calculatePrice(selectedServices, selectedTime, number);
-    
-    res.status(200).json({
-      success: true,
-      total,
-      pm: Math.round(total * 50) / 100 // 精确的50%计算
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '价格计算错误';
-    console.error('API error:', error);
-    res.status(400).json({
-      success: false,
-      message
-    });
-  }
-}
-
-// 验证请求体函数 (避免使用 any)
-function validateRequestBody(body: unknown): string | null {
-  if (typeof body !== 'object' || body === null) {
-    return '请求体必须是对象';
-  }
-
-  const { selectedServices, selectedTime, number } = body as Record<string, unknown>;
-
-  // 验证 selectedServices
-  if (!Array.isArray(selectedServices)) {
-    return 'selectedServices 必须是数组';
+// 验证请求数据
+function validateRequest(data: unknown): data is PriceRequest {
+  if (typeof data !== 'object' || data === null) {
+    return false;
   }
   
-  const invalidService = selectedServices.find(
-    service => typeof service !== 'string' || !(service in PRICING_CONFIG)
+  const requestData = data as Record<string, unknown>;
+  const { selectedServices, selectedTime, quantity } = requestData;
+  
+  // 验证 selectedServices
+  if (!Array.isArray(selectedServices) || selectedServices.length === 0) {
+    return false;
+  }
+  
+  // 验证每个服务ID是否有效
+  const isValidService = selectedServices.every(
+    service => typeof service === 'string' && service in PRICING_CONFIG
   );
   
-  if (invalidService) {
-    return `无效的服务ID: ${invalidService}`;
+  if (!isValidService) {
+    return false;
   }
-
-  // 验证 selectedTime
+  
+  // 验证时间段
   const validTimes: TimeSlot[] = ['15', '30+5', '60+15', '120+30'];
   if (typeof selectedTime !== 'string' || !validTimes.includes(selectedTime as TimeSlot)) {
-    return `无效的时间段: ${selectedTime}`;
+    return false;
   }
-
-  // 验证 number
-  if (typeof number !== 'number' || !Number.isInteger(number) || number < 1) {
-    return `无效的数量: ${number}，必须是正整数`;
+  
+  // 验证数量
+  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1) {
+    return false;
   }
-
-  return null;
+  
+  return true;
 }
 
-// 优化后的价格计算函数
-function calculatePrice(
-  selectedServices: string[], 
-  selectedTime: TimeSlot,
-  quantity: number
-): number {
+// 计算总价
+function calculateTotal(selectedServices: string[], selectedTime: TimeSlot, quantity: number): number {
   let totalPerSession = 0;
   
   for (const serviceId of selectedServices) {
     const pricing = PRICING_CONFIG[serviceId];
-    
-    if (!pricing) {
-      throw new Error(`未配置的服务ID: ${serviceId}`);
-    }
     
     if (pricing.fixed !== undefined) {
       totalPerSession += pricing.fixed;
@@ -141,4 +99,58 @@ function calculatePrice(
   
   // 使用整数运算避免浮点误差
   return Math.round(totalPerSession * quantity * 100) / 100;
+}
+
+// 处理 POST 请求
+export async function POST(request: NextRequest) {
+  try {
+    // 解析请求体
+    const requestData = await request.json();
+    
+    // 验证请求数据
+    if (!validateRequest(requestData)) {
+      return NextResponse.json(
+        { success: false, message: '无效的请求参数' },
+        { status: 400 }
+      );
+    }
+    
+    // 类型安全的请求数据
+    const { selectedServices, selectedTime, quantity } = requestData as PriceRequest;
+    
+    // 计算总价
+    const total = calculateTotal(selectedServices, selectedTime, quantity);
+    
+    // 计算预付金额 (50%)
+    const prepayment = Math.round(total * 50) / 100;
+    
+    // 返回成功响应
+    return NextResponse.json({
+      success: true,
+      total,
+      pm: prepayment
+    });
+    
+  } catch (error) {
+    // 错误处理
+    let errorMessage = '服务器处理请求时出错';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    console.error('API Error:', error);
+    
+    return NextResponse.json(
+      { success: false, message: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+
+// 可选：添加对其他HTTP方法的支持
+export async function GET() {
+  return NextResponse.json(
+    { success: false, message: '仅支持POST请求' },
+    { status: 405 }
+  );
 }
