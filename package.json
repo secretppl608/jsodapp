@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@vercel/node": "^2.3.0",
+    "critters": "^0.0.23",
     "mysql2": "^3.14.3",
     "next": "15.4.5",
     "react": "19.1.0",
