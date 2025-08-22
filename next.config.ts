@@ -5,9 +5,9 @@ const config: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  optimizeFonts: true,
   experimental: {
-    optimizeCss: false,
-    optimizeFonts: true,
+    optimizeCss: true
     // 可以添加其他实验性功能
   },
   // 可在此添加其他标准配置
