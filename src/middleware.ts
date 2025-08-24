@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const allowedOrigins = [
+const allowedOrigins: string[] = [
   'https://www.solivagant.site',
   'https://solivagant.site',
   'http://localhost:3000'
 ]
 
-export function middleware(request) {
-console.log('Middleware triggered for:', request.nextUrl.pathname)
+export function middleware(request: NextRequest) {
+  console.log('Middleware triggered for:', request.nextUrl.pathname)
   const origin = request.headers.get('origin') || ''
   console.log('Request origin:', origin)
 
   // 检查来源是否在允许列表中
   if (origin && !allowedOrigins.includes(origin)) {
-    return new NextResponse(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         success: false,
-        message: '这是一个未经允许的访问请求，该请求已被阻止。' 
-      }),
+        message: '这是一个未经允许的访问请求，该请求已被阻止。'
+      },
       {
         status: 403,
         headers: {
@@ -29,7 +30,7 @@ console.log('Middleware triggered for:', request.nextUrl.pathname)
 
   // 处理预检请求
   if (request.method === 'OPTIONS') {
-    const response = new NextResponse(null, { status: 204 })
+    const response = NextResponse.json(null, { status: 204 })
     // 设置CORS头
     response.headers.set('Access-Control-Allow-Origin', origin)
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
