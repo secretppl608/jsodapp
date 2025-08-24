@@ -7,7 +7,9 @@ const allowedOrigins = [
 ]
 
 export function middleware(request) {
+console.log('Middleware triggered for:', request.nextUrl.pathname)
   const origin = request.headers.get('origin') || ''
+  console.log('Request origin:', origin)
 
   // 检查来源是否在允许列表中
   if (origin && !allowedOrigins.includes(origin)) {
