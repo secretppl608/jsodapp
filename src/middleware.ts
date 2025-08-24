@@ -7,7 +7,12 @@ const allowedOrigins: string[] = [
   'http://localhost:3000'
 ]
 
+// 在 middleware.ts 的最顶部添加
+console.log('🔄 Middleware module loaded at', new Date().toISOString());
+
+  
 export function middleware(request: NextRequest) {
+  console.log('🔵 Middleware executing for:', request.method, request.url);
   console.log('Middleware triggered for:', request.nextUrl.pathname)
   const origin = request.headers.get('origin') || ''
   console.log('Request origin:', origin)
@@ -52,5 +57,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*'
+  // 匹配所有路径，除了Next.js内部文件和静态资源
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)',
+  ],
 }
