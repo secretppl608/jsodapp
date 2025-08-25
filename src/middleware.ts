@@ -57,8 +57,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // 匹配所有路径，除了Next.js内部文件和静态资源
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)','/api/:function?','/api/:function+','/api/:function*',
-  ],
+  matcher: '/api/:path*',
 }
