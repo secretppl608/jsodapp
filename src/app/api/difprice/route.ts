@@ -101,11 +101,6 @@ function calculateTotal(selectedServices: string[], selectedTime: TimeSlot, quan
   return Math.round(totalPerSession * quantity * 100) / 100;
 }
 
-// 处理 OPTIONS 预检请求
-export async function OPTIONS() {
-  // 不再处理 OPTIONS 请求，由中间件统一处理
-  return NextResponse.json({}, { status: 200 });
-}
 
 // 处理 POST 请求
 export async function POST(request: NextRequest) {
