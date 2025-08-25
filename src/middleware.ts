@@ -47,6 +47,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*', // 仅对 API 路由生效，配置正确
+  matcher: '/api/:path*',
+  runtime: 'nodejs',
 }
 
+
+	
