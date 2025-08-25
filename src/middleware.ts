@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
 
   // 处理预检请求
   if (request.method === 'OPTIONS') {
-    const response = NextResponse.json(null, { status: 204 })
+    const response = new NextResponse(null, { status: 204 })
     // 设置CORS头
     response.headers.set('Access-Control-Allow-Origin', origin)
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -59,6 +59,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   // 匹配所有路径，除了Next.js内部文件和静态资源
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)','/api/:function?','/api/:function+','/api/:function*',
   ],
 }
