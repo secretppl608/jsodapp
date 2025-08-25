@@ -6,7 +6,7 @@ const config: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    useLightningcss: true,
+    useLightningcss: false,
   },
 };
 
