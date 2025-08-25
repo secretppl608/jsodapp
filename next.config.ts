@@ -5,6 +5,9 @@ const config: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    useLightningcss: true,
+  },
 };
 
 export default config;
