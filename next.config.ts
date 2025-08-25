@@ -5,9 +5,6 @@ const config: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    nodeMiddleware: true,
-  },
 };
 
 export default config;
